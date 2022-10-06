@@ -17,8 +17,8 @@ use crate::{
     candy_machine::CANDY_MACHINE_ID,
     config::{
         parse_string_as_date, AwsConfig, ConfigData, Creator, EndSettingType, EndSettings,
-        GatekeeperConfig, HiddenSettings, PinataConfig, UploadMethod, WhitelistMintMode,
-        WhitelistMintSettings,
+        GatekeeperConfig, HiddenSettings, LocalConfig, PinataConfig, UploadMethod,
+        WhitelistMintMode, WhitelistMintSettings,
     },
     constants::*,
     setup::{setup_client, sugar_setup},
@@ -602,7 +602,7 @@ pub fn process_create_config(args: CreateConfigArgs) -> Result<()> {
     };
 
     // upload method
-    let upload_options = vec!["Bundlr", "AWS", "NFT Storage", "SHDW", "Pinata"];
+    let upload_options = vec!["Bundlr", "AWS", "NFT Storage", "SHDW", "Pinata", "Local"];
     config_data.upload_method = match Select::with_theme(&theme)
         .with_prompt("What upload method do you want to use?")
         .items(&upload_options)
@@ -615,6 +615,7 @@ pub fn process_create_config(args: CreateConfigArgs) -> Result<()> {
         2 => UploadMethod::NftStorage,
         3 => UploadMethod::SHDW,
         4 => UploadMethod::Pinata,
+        5 => UploadMethod::Local,
         _ => UploadMethod::Bundlr,
     };
 
@@ -705,6 +706,29 @@ pub fn process_create_config(args: CreateConfigArgs) -> Result<()> {
             content_gateway,
             parallel_limit: Some(parallel_limit),
         });
+    }
+
+    if config_data.upload_method == UploadMethod::Local {
+        let directory = Input::with_theme(&theme)
+            .with_prompt("What is the directory to upload to? Leave blank to store in root dir.")
+            .allow_empty(true)
+            .interact()
+            .unwrap();
+
+        let domain: String = Input::with_theme(&theme)
+            .with_prompt("Do you have a custom domain? Leave blank to use http://localhost:8910 default domain.")
+            .allow_empty(true)
+            .interact()
+            .unwrap();
+
+        config_data.local_config = Some(LocalConfig::new(
+            directory,
+            if domain.is_empty() {
+                Some("http://localhost:8910".to_string())
+            } else {
+                Some(domain)
+            },
+        ));
     }
 
     // retain authority

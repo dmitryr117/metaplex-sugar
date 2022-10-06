@@ -73,6 +73,8 @@ pub struct ConfigData {
 
     pub aws_config: Option<AwsConfig>,
 
+    pub local_config: Option<LocalConfig>,
+
     #[serde(serialize_with = "to_option_string")]
     pub nft_storage_auth_token: Option<String>,
 
@@ -333,6 +335,7 @@ pub enum UploadMethod {
     #[serde(rename = "shdw")]
     SHDW,
     Pinata,
+    Local,
 }
 
 impl Display for UploadMethod {
@@ -441,5 +444,17 @@ impl PinataConfig {
             content_gateway,
             parallel_limit: None,
         }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LocalConfig {
+    pub directory: String,
+    pub domain: Option<String>,
+}
+
+impl LocalConfig {
+    pub fn new(directory: String, domain: Option<String>) -> LocalConfig {
+        LocalConfig { directory, domain }
     }
 }
